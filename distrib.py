@@ -1,6 +1,7 @@
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from joblib import Parallel, delayed
 from bridge import BRidge, generate_regression, function_trigonometric
@@ -66,6 +67,9 @@ def compute_distrib_of_w_grid(function, n_list, r_list, n_samples, qlip_q=0.999)
         sharex=True, sharey=False
     )
 
+    var_table = pd.DataFrame(index=n_list, columns=r_list)
+    var_table_n = pd.DataFrame(index=n_list, columns=r_list)
+
     for i_r, r in enumerate(r_list):
         for i_n, n in enumerate(n_list):
             weights = np.array(
@@ -74,6 +78,9 @@ def compute_distrib_of_w_grid(function, n_list, r_list, n_samples, qlip_q=0.999)
             
             weights = weights.clip(0, np.quantile(weights, qlip_q))
             sns.histplot(weights.flatten(), kde=True, stat="density", ax=axes[i_n, i_r], linewidth=1.5, bins=20)
+
+            var_table.at[n, r] = np.var(weights.flatten())
+            var_table_n.at[n, r] = np.var(weights.flatten()) * n
 
             axes[i_n, i_r].set_xlabel(r'$\widetilde{w}$', fontsize=12, labelpad=8)
             axes[i_n, i_r].set_ylabel("density", fontsize=12, labelpad=8)
@@ -85,6 +92,16 @@ def compute_distrib_of_w_grid(function, n_list, r_list, n_samples, qlip_q=0.999)
     filename = f"figures/plot_distib_grid_{n_samples}.png"
     plt.savefig(filename, dpi=600)
 
+    latex_table = var_table.to_latex(float_format="%.2f", caption="Variance of weights for different $n$ and $r$", label="tab:std_weights")
+    
+    with open(f"figures/var_table_{n_samples}.tex", "w") as f:
+        f.write(latex_table)
+
+    latex_table = var_table_n.to_latex(float_format="%.2f", caption="Variance of weights times $n$ for different $n$ and $r$", label="tab:std_weights")
+    
+    with open(f"figures/var_table_{n_samples}_times_n.tex", "w") as f:
+        f.write(latex_table)
+
 
 if __name__ == "__main__":
     np.random.seed(42)
@@ -94,4 +111,4 @@ if __name__ == "__main__":
     b = np.random.normal(0, 0.16, size=size)
     function = lambda x: function_trigonometric(x, a, b, size)
     
-    compute_distrib_of_w_grid(function=function, n_list=[50, 250, 1000], r_list=[1, 6, 12], n_samples=10_000)
+    compute_distrib_of_w_grid(function=function, n_list=[50, 250, 1000, 4000], r_list=[1, 6, 12], n_samples=10_000)
