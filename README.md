@@ -1,1 +1,1 @@
-Supplemental materials and reproducible experiemnts for the "Penalty Adjustment" paper.
+Supplemental materials and reproducible experiemnts for the "Penalty Adjustment" paper. To run experements simply launch the files distrib.py and compare_cv.py. The BRidge model can be imported from bridge.by.
